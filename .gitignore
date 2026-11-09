@@ -1,0 +1,14 @@
+node_modules/
+*.tgz
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+.DS_Store
+out/
+work/
+*.keystore
+*.jks
+*.pem
+# These are synthetic upstream fixtures, not user APKs.
+!upstream/tests/fixtures/apk/*.apk

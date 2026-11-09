@@ -1,0 +1,97 @@
+# Coverage inventory — the per-route list behind `SKILL.md`'s Coverage section
+
+`SKILL.md` states the rule: **do not apply the nearest available procedure to a target it was never
+written for**, and label every claim `observed` / `inferred` / `unverified`. This file is the list that
+rule needs — which routes are covered, by what, and how strong the evidence actually is.
+
+Load it when the question is "**can this skill actually do X**", or before quoting a coverage claim
+as if it were verified. `references/coverage-and-limits.md` carries the same material as a claim
+ledger with the per-item evidence; this file is the inventory you can read in one pass.
+
+## Covered, by verified mechanisms
+
+These have a command and an output behind them somewhere in the evidence record (repository root,
+the evidence record condensed in `references/evidence-summary.md` §Where the full record lives, **not shipped with the skill**).
+
+| Area | Route, in one line | Where it lives |
+|---|---|---|
+| Client-side ads, promos, splash/popup/tab config | includes server-issued UI config that has no SDK to find | `ad-removal.md`, `server-config-and-updates.md` |
+| Membership / paywall / feature gates | decide whether it is *client-enforceable* at all, and say so when it is not | `membership-and-limits.md`, `account-gates.md` |
+| dex-level surgical patching | equal-length byte edits, dexlib2 method rewrite, header/verifier/alignment rules | `dex-patching.md`, `byte-level-patching.md`, `patch-audit.md` |
+| Whole-APK dex indexing and query | locate classes and references **before** reading code: `rasc`/`droidasc` for `findrefs`, `dexsql` for SQL joins and aggregates (callers, field accesses, numeric constants, debug lines, annotations) — all four indexers cross-checked for identical class-definition sets on four archives | `rasc-and-droidsaw.md`, `dexsql-sql-query-layer.md` |
+| Repack, sign, install | including the install refusals that look like a broken build | `repack-and-sign.md` |
+| Packers, custom loaders, code virtualization | identification, the validation boundary, the routes that survive it | `packers.md`, `code-virtualization-and-custom-linkers.md` |
+| Java2C vs extraction shell vs JNI sinking | the misdiagnosis that sends you hunting a decrypted DEX that never exists | `java2c-and-jni-sinking.md`, `scripts/java2c_probe.py` |
+| Native layer | `.so` hosts, tamper-triggered self-termination, forged ELF, neutralising a terminate path | `native-and-so.md`, `native-tamper-and-suicide.md` |
+| Flutter / Dart AOT | analysing and patching `libapp.so` **given a snapshot dump** | `dart-aot.md` |
+| Runtime and server side | Frida analysis, API probing, feature-scoped TLS failures, update/forced-upgrade neutralisation | `dynamic-frida.md`, `server-api.md`, `tls-and-cert.md`, `updates-and-forced-upgrade.md` |
+| Verification discipline | the claim ladder, control builds, capture-and-look, bounded waits | `verification.md`, `long-task-discipline.md` |
+| A comparison gate as an oracle | instrument the comparator's own counter (not the clock), grow the correct prefix one position at a time, and read the fail-path cost to decide whether the oracle is open or the check is over a digest — host-measured on synthetic compares, no real gate attacked | `account-gates.md` |
+
+## Also covered, by documented routes — mostly *inferred* rather than measured
+
+Read the qualification, not just the name: for these the **mechanism is documented and the end-to-end
+route was not measured on this repository's evidence**. Treat them as leads with a stated boundary.
+
+| Area | What it gives you |
+|---|---|
+| Module-side delivery | an LSPosed/Xposed module when a repack is refused — `lsposed-and-modules.md` |
+| Extraction shells and the VMP boundary | how to *measure* that the bodies are empty, and where recovery stops — `advanced-unpacking.md` |
+| Calling a routine instead of reading it | emulation (Unidbg/Unicorn) versus service-ifying the live function over Frida RPC — `emulation-and-rpc.md` |
+| Instruction-level tracing | Stalker traces and the trace-to-CFG route against OLLVM, with its measured boundaries — `native-dbi-and-deobfuscation.md` |
+| Protocols beyond REST | schema-free protobuf, gRPC frames, QUIC/HTTP3 limits, native-side pinning — `protocol-reverse.md` |
+| When userspace hooking cannot reach the check | raw `svc`, `init_array`-early detection, the kernel-route map and its version gate — `kernel-and-environment-hardening.md` |
+| Split APK / App Bundle sets | reading a set, merge versus unified re-signing, the install refusal each mistake produces — `split-apk.md` |
+| Dex-VMP differential analysis | the known-plaintext route, what it can and cannot automate — `vmp-differential-analysis.md` |
+| Kernel-module templates | a scaffold **and** its version gate; a userspace module cannot change a syscall return value — `kernelsu_syscall_mask.py` |
+| Hardware watchpoints (ptrace) | who reads/writes one address with zero code change, the encoders host-tested and the helper compiled — never armed on a device here — `hardware-watchpoints.md` |
+| ETE differential tracing | two one-bit-different runs into the input-dependent block set; gates probed by script, producer unverified — `ete-diff-tracing.md` |
+| SPE/BRBE sampling and crash forensics | data flow without a known address, branch records past an untrustworthy stack, addresses→symbols — `hardware-sampling-and-crash.md` |
+| Interpreter-trace de-virtualization | handler slicing + guest-opcode trajectory, calibrated on an open IR-VM's source — `vm_handler_slice.py` |
+| Native VM recovery procedure | the absorbed method end to end: dispatcher separation, register anchoring, nested stacks, operand slicing, re-VM validation — `native-vm-recovery.md` |
+| JS VMP (jsvmp) recovery | recognition, call-it-first, stack/register-VM reading, instruction extraction, the four JS traps — procedures absorbed, only the loader decoder shipped and round-trip-tested — `jsvmp-recovery.md` |
+| JS AST pre-deobfuscation | family detection + per-family pass order + safe-rewrite rules; detector shipped and fixture-tested, rewriting needs node+babel (not shipped) — `js-ast-deobfuscation.md`, `js_obf_detect.py` |
+| Kotlin original-name recovery | obfuscated→original class map from `@DebugMetadata`/`@Metadata` in any jadx export; parsing fixture-tested, recovery rates upstream-claimed — `kotlin-name-recovery.md`, `kotlin_name_recovery.py` |
+| Long-connection (WebSocket) analysis | state chains, message families, envelope/payload split — absorbed methodology, never run on an Android target here — `protocol-reverse.md` |
+| Unity (Mono and IL2CPP) | backend identification, Il2CppDumper over `libil2cpp.so` + `global-metadata.dat`, the IDA import order, a run-time lookup over frida-il2cpp-bridge, the dnSpy-Unity-mono patch, and a VM that lives in the managed layer (opcode array + cursor + `Dictionary<int, delegate>` in `dump.cs`, handler indices from the constructor, array literals via `InitializeArray`) — absorbed, nothing run here — `unity-runtime.md` |
+| Protected IL2CPP metadata | when the pair is not readable: consumer-side dump, header sizing without trusting the version, XOR/VM/XXTEA containers, the live-image dump and ELF repair, and the ELF fingerprint of a rebuilt `libil2cpp` (`JNI_OnLoad` / own `DT_INIT` / `SHT_LOUSER`) — absorbed, nothing run here — `il2cpp-protected-metadata.md` |
+| Linker-level SO unpacking and repair | the `dlopen` pipeline as a loader spec, load_bias/segment arithmetic, `DT_*` and relocation rules, `soinfo` repair, anti-dump header XOR — source-reading synthesis, no loader reimplemented — `linker-and-soinfo-repair.md` |
+| VM protector analysis | virtual eflags, NAND lowering, branchless select, data-anchored breakpoints and trace search by constant — absorbed from x86 VMProtect samples, never run on Android here — `vm-protector-analysis.md` |
+| Python bytecode / Pyarmor | key schedule, AES-CTR nonce rules, the 12-byte VM, version-gated `pyc` parsing, the extra-section TLV, and the outer container layer with its three nonce scopes — absorbed, no sample unpacked here; the counter-mode nonce behaviour is host-measured — `python-bytecode-recovery.md` |
+| Attaching a real debugger to a `.so` | IDA `dbgsrv` with the ABI match, wait-for-debugger plus the JDWP handshake, and the `extractNativeLibs="false"` failure where no breakpoint binds — `ida-so-debugging.md` |
+| Kernel-side event injection | watchpoints and register rewrites from a driver, as gated templates — `kernel-event-injection.md` |
+| Working from the phone itself | MT Manager edit/repack/sign and its APK MCP, LSPosed Manager, Termux — `on-device-tooling.md` |
+| Publishing without publishing the target | the leak scanner, the do-not-anonymize list, and the graded precedent library — `desensitization-and-leak-scans.md`, `scripts/scan_leaks.py`, `precedents/` |
+| Native dump window and syscall reader | dump at `android_dlopen_ext` entry when self-decryption and watchdog startup share `JNI_OnLoad`; read via raw syscalls; zero-fill unreadable pages so offsets survive repair — absorbed, nothing run here — `linker-and-soinfo-repair.md` |
+| White-box crypto devirtualization | fold a deterministic VM transform into a straight-line `(op, args)` program plus constant table, output map and template, pinned to one build — absorbed, no extract produced — `native-vm-recovery.md` |
+| Cipher classification by differential probe | header length, determinism, one-byte diffusion width and the length law separate CTR/CBC/ECB; involution wrappers cancel; encoding/compression drift is the last mile — probes host-checked on AES-128, no target classified — `protocol-reverse.md` |
+
+## Dependencies this skill does not ship
+
+Each of these is a **fence**, not a caveat: the route above it stops here unless you obtain the
+dependency yourself.
+
+- **Dart AOT analysis needs a snapshot dump**, and which front end produced it matters (`dart-aot.md` §1–2).
+- **`smali` round-trip needs baksmali/smali/dexlib2 jars** — not bundled; `APKREV_JARS` points at them.
+- **Repack-and-sign needs `zipalign` + `apksigner`** (or `uber-apk-signer`); a JVM alone is not enough,
+  which is exactly what `scripts/doctor.py` now refuses to report as OK.
+- **Device work needs `adb` plus a device the app does not object to**; dynamic work additionally needs
+  a `frida-server` matching the host version.
+- **A kernel-side answer needs a module and a kernel that accepts it** — the version gate is in
+  `kernel-and-environment-hardening.md`; the instrumentation templates add their own
+  (the kernel's perf breakpoint layer must exist — `kernel-event-injection.md`).
+- **The ETE route needs coresight hardware this skill cannot conjure** — an ETE/TRBE-capable core,
+  a kernel with the drivers, and a perf built against OpenCSD; without them the route is closed,
+  not expensive (`ete-diff-tracing.md`).
+
+## Not covered — say so rather than improvise
+
+React Native, Hermes bytecode and Cordova internals · iOS of any kind ·
+defeating a server-side authority · an off-the-shelf unpacker · an anti-detection arms race · building
+and shipping a kernel module · a Stalker trace guaranteed on every device · **a measured** Unity /
+IL2CPP route (the documented ones are `unity-runtime.md` and `il2cpp-protected-metadata.md`, and neither
+carries a measurement).
+
+Each has a reason and, where one exists, an evidence boundary — in `references/coverage-and-limits.md`.
+**Silence in that record is not support**, and a route that is only "documented" is not a route that
+was measured.

@@ -1,0 +1,32 @@
+{
+  "name": "dsh-apk-reverse",
+  "version": "0.1.0",
+  "description": "APK reverse engineering skill provider for DeepSeek Harness, with the complete apk-reverse toolkit.",
+  "author": "MIKUSCAT",
+  "license": "MIT",
+  "type": "module",
+  "main": "index.mjs",
+  "exports": {
+    ".": "./index.mjs",
+    "./package.json": "./package.json",
+    "./cordis.patch.yml": "./cordis.patch.yml"
+  },
+  "bin": { "dsh-apk-reverse": "./bin/apk-reverse.mjs" },
+  "files": ["index.mjs", "src", "bin", "cordis.patch.yml", "upstream", "upstream-manifest.json", "LICENSE", "NOTICE.md", "README.md"],
+  "keywords": ["dsh-plugin", "deepseek-harness", "apk", "android", "reverse-engineering", "agent-skills"],
+  "engines": { "node": ">=22.19.0", "dsh": ">=0.2.1-rc.5 <0.3.0" },
+  "repository": { "type": "git", "url": "git+https://github.com/MIKUSCAT/dsh-apk-reverse.git" },
+  "dsh": { "bundle": { "patch": "./cordis.patch.yml" } },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "test:integration": "node --test tests/integration/*.test.mjs",
+    "verify:upstream": "node scripts/verify-upstream.mjs",
+    "check": "npm run verify:upstream && npm test && npm run test:integration",
+    "doctor": "node bin/apk-reverse.mjs doctor"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.5",
+    "@deepseek-ai/dsh-skill": "0.2.1-rc.5",
+    "@deepseek-ai/dsh-scope": "0.2.1-rc.5"
+  }
+}
